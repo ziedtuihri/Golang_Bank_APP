@@ -1,7 +1,7 @@
 version: "1"
 packages:
   - name: "db"
-    path: "./db/sqlc"
+    path: "./db/sqlc/"
     queries: "./db/query/"
     schema: "./db/migration/"
     engine: "postgresql"
@@ -11,4 +11,5 @@ packages:
     emit_exact_table_names: false
     emit_empty_slices: true
 
-# emit_exact_table_names account table -> Accounts struct
+    # emit_exact_table_names account table -> Accounts struct
+
