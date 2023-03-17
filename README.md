@@ -11,4 +11,6 @@ sudo mv migrate /usr/local/bin/migrate
 
 Remember tha when you run this command migrate create -ext sql -dir db/migration -seq init_schema  you are not ROOT 
 
+make migrateup and migratedown when you get donw make sure that the table have this value version = 1 and dirty = false  
+
 Because after this we need this files for SQL
