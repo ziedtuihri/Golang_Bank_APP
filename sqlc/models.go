@@ -2,7 +2,7 @@
 // versions:
 //   sqlc v1.17.0
 
-package tutorial
+package db
 
 import (
 	"time"
