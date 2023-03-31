@@ -4,6 +4,7 @@ import (
 	"context"
 	"db/db/util"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -45,4 +46,6 @@ func TestGetAccount(t *testing.T) {
 	require.Equal(t, account1.Owner, account2.Owner)
 	require.Equal(t, account1.ID, account2.ID)
 	require.Equal(t, account1.ID, account2.ID)
+
+	require.WithinDuration(t, account1.CreatedAt, account2.CreatedAt, time.Second)
 }
