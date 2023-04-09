@@ -1,5 +1,5 @@
 DB_URL=postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable
-SQLC_URL=/home/zied/Desktop/Golang_Bank_APP/sqlc.yaml
+SQLC_URL=./sqlc.yaml
 
 network:
 	docker network create bank-network
@@ -38,7 +38,7 @@ db_schema:
 	dbml2sql --postgres15 -o doc/schema.sql doc/db.dbml
 
 sqlc:
-	sqlc generate --config $(SQLC_URL)
+	sqlc generate $(SQLC_URL)
 
 test:
 	go test -v -cover -short ./...
