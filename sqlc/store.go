@@ -6,31 +6,19 @@ import (
 	"fmt"
 )
 
-/*
-The first field Queries is a pointer to a type that contains SQL queries
-to be executed against the database. This means that the Store struct has
-
-	access to these queries and can use them to perform CRUD (create, read, update, delete)
-	operations on the database.
-
-The second field db is a pointer to a database connection (*sql.DB),
-
-	which is used to actually execute the SQL queries. This allows the Store struct to
-	establish a connection to the database and execute SQL statements against it.
-*/
+// Store defines all functions to execute db queries and transactions
 type Store struct {
 	*Queries
 	db *sql.DB
 }
 
-/*
-The NewStore function initializes a new *Store instance by creating a new Queries struct
-using the New function (which is presumably defined elsewhere in the codebase),
-and setting the db field to the provided *sql.DB. Finally, it returns the *Store instance.
-This allows for easy access to all the SQL queries in the Queries struct via the *Store instance,
- while still maintaining a single database connection.
-*/
+// SQLStore provides all functions to execute SQL queries and transactions
+type SQLStore struct {
+	db *sql.DB
+	*Queries
+}
 
+// NewStore creates a new store
 func NewStore(db *sql.DB) *Store {
 	return &Store{
 		db:      db,
@@ -38,31 +26,74 @@ func NewStore(db *sql.DB) *Store {
 	}
 }
 
-/*
-This is a method called execTx that belongs to a type SQLStore. It takes in a context object ctx and a function fn that takes in a pointer to Queries and returns an error. The purpose of this method is to execute the provided function within a database transaction.
-
-First, the method begins a transaction on the database using the BeginTx method of the db object that is part of the SQLStore type. If there is an error starting the transaction, it is returned immediately.
-
-Next, a new Queries object is created by calling the New method with the transaction object tx. The provided function fn is executed with this Queries object.
-
-If there is an error executing the function, the transaction is rolled back using the Rollback method. If the rollback fails, an error is returned that combines the original error and the rollback error. Otherwise, the original error is returned.
-
-If the function completes successfully, the transaction is committed using the Commit method of the tx object. If there is an error committing the transaction, it is returned immediately.
-*/
-func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
+// ExecTx executes a function within a database transaction
+func (store *SQLStore) execTx(ctx context.Context, fn func(*Queries) error) error {
 	tx, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
+
 	q := New(tx)
 	err = fn(q)
-
 	if err != nil {
 		if rbErr := tx.Rollback(); rbErr != nil {
-			return fmt.Errorf("txt err : %v, rb err: %v", err, rbErr)
+			return fmt.Errorf("tx err: %v, rb err: %v", err, rbErr)
 		}
 		return err
-
 	}
+
 	return tx.Commit()
+}
+
+// TransferTxParams contains the input parameters of the transaction
+type TransferTxParams struct {
+	FromAccountID int64 `json:"from_account_id"`
+	ToAccountID   int64 `json:"to_account_id"`
+	Amount        int64 `json:"amount"`
+}
+
+type TransferTxResult struct {
+	Transfer    Transfer `json:"transfer"`
+	FromAccount Account  `json:"from_account"`
+	ToAccount   Account  `json:"to_account"`
+	FromEntry   Entry    `json:"from_entry"`
+	ToEntry     Entry    `json:"to_entry"`
+}
+
+func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
+	var result TransferTxResult
+
+	err := store.execTx(ctx, func(q *Queries) error {
+		var err error
+
+		result.Transfer, err = q.CreateTransfer(ctx, CreateTransferParams{
+			FromAccountID: arg.FromAccountID,
+			ToAccountID:   arg.ToAccountID,
+			Amount:        arg.Amount,
+		})
+		if err != nil {
+			return err
+		}
+
+		result.FromEntry, err = q.CreateEntry(ctx, CreateEntryParams{
+			AccountID: arg.FromAccountID,
+			Amount:    -arg.Amount,
+		})
+		if err != nil {
+			return err
+		}
+		result.ToEntry, err = q.CreateEntry(ctx, CreateEntryParams{
+			AccountID: arg.ToAccountID,
+			Amount:    arg.Amount,
+		})
+		if err != nil {
+			return err
+		}
+
+		return nil
+
+		// TODO: update accounts' balance
+	})
+
+	return result, err
 }
