@@ -23,16 +23,27 @@ func TestTransferTx(t *testing.T) {
 	results := make(chan TransferTxResult)
 
 	//run  n concurrent transfer transaction
-	for i:=0; i<n;i++ {
+	for i := 0; i < n; i++ {
 		go func() {
 			result, err := store.TransferTx(context.Background(), TransfreTxParams{
-				FromAccountID:		account1.ID,
-				ToAccountID:		account2.ID,
-				Amount:				amount,
+				FromAccountID: account1.ID,
+				ToAccountID:   account2.ID,
+				Amount:        amount,
 			})
 			errs <- err
 			results <- result
 		}()
+	}
+
+	//check results
+	for i := 0; i < n; i++ {
+		err := <-errs
+		require.NoError(t, err)
+
+		result := <-results
+		require.NotEmpty(t, transfer)
+		require.Equal(t, account1.ID, transfer.FromAccountID)
+		require.Equal(t, account2.ID, transfer.ToAccountID)
 	}
 
 }
