@@ -1,5 +1,6 @@
 # Golang_Bank_APP
 
+<h2> when i want to stop a container and there is problems with permission try with this command: <br> sudo aa-remove-unknown</h2> 
 
 for the installation of migration CLI on Ubuntu follow this 
 
