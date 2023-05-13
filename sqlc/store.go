@@ -12,12 +12,6 @@ type Store struct {
 	db *sql.DB
 }
 
-// SQLStore provides all functions to execute SQL queries and transactions
-type SQLStore struct {
-	db *sql.DB
-	*Queries
-}
-
 // NewStore creates a new store
 func NewStore(db *sql.DB) *Store {
 	return &Store{
@@ -27,7 +21,7 @@ func NewStore(db *sql.DB) *Store {
 }
 
 // ExecTx executes a function within a database transaction
-func (store *SQLStore) execTx(ctx context.Context, fn func(*Queries) error) error {
+func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
 	tx, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
