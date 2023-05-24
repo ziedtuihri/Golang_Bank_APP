@@ -66,3 +66,11 @@ redis:
 	docker run --name redis -p 6379:6379 -d redis:7-alpine
 
 .PHONY: network postgres15 createdb dropdb migrateup migratedown migrateup1 migratedown1 new_migration db_docs db_schema sqlc test server mock proto evans redis
+
+
+## for mysql instance sudo docker run --name db-mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=secret -d mysql
+
+# tablePlus configuration postgreSQL 127.0.0.1 5432  user: root psw: secret  database name: root
+
+
+
